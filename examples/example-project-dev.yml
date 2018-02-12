@@ -1,0 +1,17 @@
+ApplicationName: sample-application
+Region: us-east-1
+EnvConfig:
+  API_URL: https://sample-application.google.com
+  DYNAMODB_SSL: 'TRUE'
+  ENV: prod
+  FLAGGED_USERS: '[]'
+  FORCE_MINIMUM_VERSION: 'true'
+  HTTP_CACHE: 'FALSE'
+  NOTIFICATION_QUEUE_ENABLED: 'true'
+  PROMPT_FOR_UPDATE_ENABLED: 'true'
+  WATCH_ADXMI_ENABLED: 'false'
+  WATCH_VUNGLE_ENABLED: 'true'
+  WELCOME_EMAIL_ENABLED: 'true'
+EnvironmentID: e-abcdefghi
+EnvironmentName: dev
+
