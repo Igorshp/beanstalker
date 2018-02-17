@@ -1,6 +1,6 @@
 from unittest import TestCase
 from datetime import datetime
-import beanstalker
+from beanstalker import beanstalker
 import boto3
 from botocore.stub import Stubber
 
