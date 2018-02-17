@@ -64,7 +64,7 @@ class TestBeanstalker(TestCase):
         added, removed, modified, same = beanstalker.dict_compare(proposed, existing)
         self.assertFalse(added)
         self.assertFalse(removed)
-        self.assertEquals(modified['param2'][0], 'newval')
+        self.assertEqual(modified['param2'][0], 'newval')
         self.assertEqual(len(same), len(existing) - 1)
 
     def test_describe_environment(self):
@@ -84,7 +84,7 @@ class TestBeanstalker(TestCase):
         stubber.add_response("describe_environments", response, expected_params)
         stubber.activate()
         env = beanstalker.describe_environment(client, APP_NAME, ENV_ID)
-        self.assertEquals(env["EnvironmentName"], "testEnv")
+        self.assertEqual(env["EnvironmentName"], "testEnv")
 
     def test_get_environment_variables(self):
         client = beanstalker.get_client()
@@ -130,7 +130,6 @@ class TestBeanstalker(TestCase):
         env_config = beanstalker.get_environment_variables(client, expected_params)
         self.assertEqual(len(env_config), 1)
         self.assertEqual(env_config['envoption1'], 'envval1')
-        print(env_config)
 
 
 
