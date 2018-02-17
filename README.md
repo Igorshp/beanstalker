@@ -3,6 +3,10 @@ Elastic Beanstalk Configuration script
 
 Allows easy configuration of environment variables for Beanstalk applications with version controlled files.
 
+Tests
+=====
+TravisCI: [![Build Status](https://travis-ci.org/Igorshp/beanstalker.svg?branch=master)](https://travis-ci.org/Igorshp/beanstalker)
+
 Usage:
 =====
 
