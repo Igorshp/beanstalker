@@ -6,6 +6,7 @@ import pprint
 import json
 import argparse
 import os
+from os.path import basename, splitext
 
 pp = pprint.PrettyPrinter(indent=4)
 DEBUG = False
@@ -81,6 +82,20 @@ def get_environment_variables(client, env: dict) -> dict:
             env_vars[option['OptionName']] = option['Value']
     return env_vars
 
+def get_applications(client) -> dict:
+    apps = client.describe_applications()
+
+    app_names = [ app['ApplicationName'] for app in apps['Applications']]
+    return app_names
+
+def get_environments(client, app_name) -> list:
+    envs = client.describe_environments(ApplicationName=app_name)
+    return envs['Environments']
+     
+    
+
+
+
 
 def describe_environment(client, app_name: str, env_id: str) -> dict:
     response = client.describe_environments(
@@ -92,8 +107,8 @@ def describe_environment(client, app_name: str, env_id: str) -> dict:
     return response['Environments'][0]
 
 
-def get_config(region, app_name, env_id) -> dict:
-    client = get_client(region)
+def get_config(client, region, app_name, env_id) -> dict:
+    get_applications(client)
     env = describe_environment(client, app_name, env_id)
     debug("getting config for app {}, env {} ({})".format(app_name, env['EnvironmentName'], env_id))
     env_vars = get_environment_variables(client, env)
@@ -108,9 +123,52 @@ def get_config(region, app_name, env_id) -> dict:
     # print(yaml.dump(config, default_flow_style=False))
 
 
-def action_get(region: str, app_name: str, env_id: str):
-    config = get_config(region, app_name, env_id)
-    print(yaml.dump(config, default_flow_style=False))
+def action_get(region: str, app_name: str, env_id: str, out_file: str):
+    client = get_client(region)
+    if not app_name:
+        availiable_apps = get_applications(client)
+        if len(availiable_apps) == 0:
+            print("{} region doesn't have any beanstalk applications".format(region))
+            return
+        print("Availiable apps in {} region:".format(region))
+        for idx, name in enumerate(availiable_apps):
+            print("{}: {}".format(idx, name))
+        item = input("Select application [0-{}] ".format(len(availiable_apps)-1))
+        try:
+            app_name = availiable_apps[int(item)]
+        except (IndexError, ValueError):
+            print("{} is invalid option. Quitting")
+            return
+        print("Selected {}".format(availiable_apps[int(item)]))
+    if not env_id:
+        print("env id not selected")
+        availiable_envs = get_environments(client, app_name)
+        if len(availiable_envs) == 0:
+            print("{} doesn't have any environments".format(app_name))
+            return
+        print("Availiable environments for {}:".format(app_name))
+        for idx, env in enumerate(availiable_envs):
+            print("{}: {} ({})".format(idx, env['EnvironmentName'], env['EnvironmentId']))
+        item = input("Select environment to pull config for [0-{}] ".format(len(availiable_envs)-1))
+        try:
+            env = availiable_envs[int(item)]
+        except (IndexError, ValueError):
+            print("{} is invalid option. Quitting")
+            return
+        print("Selected {}".format(env['EnvironmentName']))
+        env_id = env['EnvironmentId']
+    config = get_config(client, region, app_name, env_id)
+    raw_yaml = yaml.dump(config, default_flow_style=False)
+    print(raw_yaml)
+    if not out_file:
+        out_file = input("Enter output filename to save config to: ")
+    out_file_base = basename(out_file)
+    ext = splitext(out_file_base)[1]
+    if not ext:
+        out_file = out_file + ".yml"
+    to_file(out_file, raw_yaml)
+    print("Saved config to {}".format(out_file))
+        
 
 
 def update_env(client, app_name: str, env_id:str , options_to_update: dict, options_to_remove):
@@ -181,6 +239,8 @@ def action_update(args: dict):
         print("No changes found, environment is up to date")
 
 
+
+
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('action', choices=["get", "update"])
@@ -188,10 +248,11 @@ def main():
     parser.add_argument('--app-name')
     parser.add_argument('--env-id')
     parser.add_argument('--region')
+    parser.add_argument('--out-file')
     args = parser.parse_args()
 
     if args.action == 'get':
-        action_get(args.region, args.app_name, args.env_id)
+        action_get(args.region, args.app_name, args.env_id, args.out_file)
     elif args.action == 'update':
         action_update(args)
     else:
